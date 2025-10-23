@@ -124,3 +124,96 @@ kareem:x:1002:1002::/home/kareem:/sbin/nologin
 [root@stapp01 ~]# ls -la /home/ | grep kareem
 drwx------ 2 kareem  kareem  4096 Oct 22 17:28 kareem
 [root@stapp01 ~]# 
+
+
+
+Explanation:
+
+We don’t create anything in /sbin.
+We’re just telling Linux to use a special shell program that already lives there — like /usr/sbin/nologin — when we create a non-interactive user.
+ 
+ 
+---
+ 
+🧠 Detailed Explanation
+ 
+1️⃣ What /usr/sbin/nologin actually is
+ 
+/usr/sbin/nologin is a program (a small executable file) that simply says:
+ 
+> “This account is not available for interactive login.”
+ 
+ 
+ 
+So when a user with /usr/sbin/nologin tries to log in (e.g., via SSH or terminal), Linux runs this program instead of giving them a shell like /bin/bash.
+It immediately exits with a message like:
+ 
+This account is currently not available.
+ 
+ 
+---
+ 
+2️⃣ Why it’s in /usr/sbin/
+ 
+Historically:
+ 
+/bin/ → contains essential programs for all users
+ 
+/sbin/ → contains system binaries, mostly used by system administrators (root)
+ 
+/usr/sbin/ → non-essential system management tools
+ 
+ 
+So /usr/sbin/nologin lives there because:
+ 
+It’s a system-level utility (not something a regular user needs)
+ 
+It’s mainly used by administrators to control login behavior
+ 
+ 
+ 
+---
+ 
+3️⃣ What happens when you assign it as a shell
+ 
+When you create a user like this:
+ 
+sudo useradd -s /usr/sbin/nologin backupuser
+ 
+You’re not placing the user “in” /sbin.
+You’re just telling the system:
+ 
+> “When backupuser logs in, instead of starting Bash or Sh, run /usr/sbin/nologin.”
+ 
+ 
+ 
+That makes the user non-interactive — they exist, but can’t open a shell session.
+ 
+ 
+---
+ 
+4️⃣ Alternative shells for similar behavior
+ 
+You could also use:
+ 
+/sbin/nologin (on some distros)
+ 
+/bin/false (older method — simply exits immediately)
+ 
+ 
+Example:
+ 
+sudo useradd -s /bin/false backupuser
+ 
+This also blocks login, but /usr/sbin/nologin is preferred because it gives a clearer message.
+ 
+ 
+---
+ 
+✅ Summary
+ 
+Path Purpose Behavior
+ 
+/bin/bash Normal user shell Allows login & interaction
+/usr/sbin/nologin System utility Blocks login, shows message
+/bin/false Basic command Blocks login silently
