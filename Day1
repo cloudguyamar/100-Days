@@ -129,6 +129,60 @@ drwx------ 2 kareem  kareem  4096 Oct 22 17:28 kareem
 
 Explanation:
 
+💡 First, what’s a “shell”?
+ 
+A shell is a program that lets you talk to your computer by typing commands instead of clicking buttons.
+For example, when you open a Terminal or Command Prompt, that’s a shell.
+ 
+ 
+---
+ 
+🧍 “Interactive shell user”
+ 
+An interactive shell is when you are actively using the terminal — typing commands, seeing results, typing the next command, etc.
+ 
+Example:
+ 
+You open Terminal.
+ 
+You type ls to list files.
+ 
+You type cd Documents.
+ 
+The computer waits for your next command.
+ 
+ 
+✅ That’s interactive — you and the shell are having a “conversation.”
+ 
+ 
+---
+ 
+🤖 “Non-interactive shell user”
+ 
+A non-interactive shell is when no person is typing commands directly.
+Instead, commands are run automatically — by a script, program, or system task.
+ 
+Example:
+ 
+You have a script called backup.sh that copies your files every night at 2 AM.
+ 
+The computer runs that script automatically.
+ 
+Nobody is there typing commands — it just runs and exits.
+ 
+ 
+✅ That’s a non-interactive shell — it’s working without human interaction.
+ 
+ 
+---
+ 
+🔍 In short:
+ 
+Type Who’s typing? Example
+ 
+Interactive shell You (a human) Typing commands in Terminal
+Non-interactive shell A script/program Nightly backup script running automatically
+
 We don’t create anything in /sbin.
 We’re just telling Linux to use a special shell program that already lives there — like /usr/sbin/nologin — when we create a non-interactive user.
  
