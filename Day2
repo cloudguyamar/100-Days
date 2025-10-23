@@ -1,7 +1,7 @@
 🚀 Day 2 of 100 Days of DevOps: Temporary User Management
 
 🖥️ Server Details
-Server Name	IP	Hostname	User	Password	Purpose
+Server Name	IP	Hostname	User	Password	Purpose 
 stapp01	172.16.*.*	stapp01.stratos.xfusioncorp.com	tony	I**nMn	Nautilus App 1
 stapp02	172.16.*.*	stapp02.stratos.xfusioncorp.com	steve	A**ric	Nautilus App 2
 
