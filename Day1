@@ -1,0 +1,126 @@
+🚀 Day 1 of 100 Days challange: Mastering Linux User Security
+🎯 Challenge: 100 Days  with KodeKloud
+
+🖥️ Server Details
+
+Server Name	IP	Hostname	User	Password	Purpose
+stapp01	172.16.*.*	stapp01.stratos.xfusioncorp.com	tony	I**nMn	Nautilus App 1
+stapp02	172.16.*.*	stapp02.stratos.xfusioncorp.com	steve	A**ric	Nautilus App 2
+
+📋 Lab Overview
+To accommodate the backup agent tool's specifications, the system admin team at xFusionCorp Industries requires the creation of a user with a non-interactive shell. Here's your task:
+
+Create a user named kareem with a non-interactive shell on App Server 1.
+Note: You can find the infrastructure details by clicking on the Details of all Users and Servers button on the top-right section of the page.
+
+🔧 Step-by-Step Solution
+Step 1: Connect to App Server 1
+# SSH into App Server 1 (stapp01 - Nautilus App 1)
+ssh tony@stapp01.stratos.xfusioncorp.com
+# OR using IP address
+ssh tony@stapp01.stratos.xfusioncorp.com
+
+# Enter password when prompted: I**nMn
+Step 2: Switch to Root User
+# Switch to root for user management operations
+sudo su -
+Step 3: Create User with Non-Interactive Shell
+# Create user 'kareem' with /sbin/nologin as shell
+useradd -s /sbin/nologin kareem
+Alternative command options:
+
+# Option 1: Using /bin/false as non-interactive shell
+useradd -s /bin/false kareem
+
+# Option 2: Using /usr/sbin/nologin (on some systems)
+useradd -s /usr/sbin/nologin kareem
+Step 4: Verify User Creation
+# Check if user was created successfully
+id kareem
+
+# Verify the shell assignment
+grep kareem /etc/passwd
+
+# Check user's home directory
+ls -la /home/ | grep kareem
+✅ Validation Steps
+✅ User javed created successfully
+✅ User has non-interactive shell (/sbin/nologin)
+✅ User entry exists in /etc/passwd
+✅ User cannot login interactively
+
+Lab performed
+
+thor@jumphost ~$ useradd kareem
+useradd: Permission denied.
+useradd: cannot lock /etc/passwd; try again later.
+thor@jumphost ~$ sudo su -
+ 
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+ 
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+ 
+[sudo] password for thor: 
+sudo: a password is required
+thor@jumphost ~$ ssh thor@App Server 1
+ssh: connect to host app port 22: Connection refused
+
+thor@jumphost ~$ ifconfig
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.16.238.3  netmask 255.255.255.0  broadcast 172.16.238.255
+        ether 02:42:ac:10:ee:03  txqueuelen 0  (Ethernet)
+        RX packets 12  bytes 976 (976.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+ 
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.16.239.3  netmask 255.255.255.0  broadcast 172.16.239.255
+        ether 02:42:ac:10:ef:03  txqueuelen 0  (Ethernet)
+        RX packets 11  bytes 866 (866.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+ 
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.8  netmask 255.255.0.0  broadcast 172.17.255.255
+        ether 02:42:ac:11:00:08  txqueuelen 0  (Ethernet)
+        RX packets 325  bytes 40799 (39.8 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 237  bytes 196030 (191.4 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+ 
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 8  bytes 665 (665.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8  bytes 665 (665.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+ 
+thor@jumphost ~$ hostname
+jumphost.stratos.xfusioncorp.com
+thor@jumphost ~$ ssh tony@jumphost.stratos.xfusioncorp.com
+The authenticity of host 'jumphost.stratos.xfusioncorp.com (172.16.*.*)' can't be established.
+ED25519 key fingerprint is SHA256:gTo1087T3tLtWrFrPTfFR228wtSx9f6ManjawAYT96E.
+[tony@stapp01 ~]$ sudo su -
+ 
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+ 
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+ 
+[sudo] password for tony: 
+[root@stapp01 ~]# useradd -s /sbin/nologin kareem
+[root@stapp01 ~]# id kareem
+uid=1002(kareem) gid=1002(kareem) groups=1002(kareem)
+[root@stapp01 ~]# grep kareem /etc/passwd
+kareem:x:1002:1002::/home/kareem:/sbin/nologin
+[root@stapp01 ~]# ls -la /home/ | grep kareem
+drwx------ 2 kareem  kareem  4096 Oct 22 17:28 kareem
+[root@stapp01 ~]# 
