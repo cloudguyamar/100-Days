@@ -1,0 +1,95 @@
+🚀 Day 2 of 100 Days of DevOps: Temporary User Management
+
+🖥️ Server Details
+Server Name	IP	Hostname	User	Password	Purpose
+stapp01	172.16.*.*	stapp01.stratos.xfusioncorp.com	tony	I**nMn	Nautilus App 1
+stapp02	172.16.*.*	stapp02.stratos.xfusioncorp.com	steve	A**ric	Nautilus App 2
+
+📋 Lab Overview
+As part of the temporary assignment to the Nautilus project, a developer named kirsty requires access for a limited duration. To ensure smooth access management, a temporary user account with an expiry date is needed. Here's what you need to do:
+
+ 
+Create a user named kirsty on App Server 1 in Stratos Datacenter. Set the expiry date to 2024-02-17, ensuring the user is created in lowercase as per standard protocol.
+Note: You can find the infrastructure details by clicking on the Details of all Users and Servers button on the top-right section of the page.
+
+🔧 Step-by-Step Solution
+Step 1: Connect to App Server 1
+# SSH into App Server 1 (stapp01 - Nautilus App 1)
+ssh tony@stapp03.stratos.xfusioncorp.com
+# OR using IP address
+ssh tony@172.16.*.*
+
+# Enter password when prompted: I**nMn
+Step 2: Switch to Root User
+# Switch to root for user management operations
+sudo su -
+Step 3: Create User with Expiry Date
+# Create user 'kirsty' with expiry date 2024-02-17
+useradd -e 2024-02-17 kirsty
+Alternative command options:
+
+# Using different date format
+useradd --expiredate 2024-02-17 kirsty
+
+# Create user first, then set expiry
+useradd kirsty
+chage -E 2024-02-17 kirsty
+Step 4: Verify User Creation and Expiry
+# Check if user was created successfully
+id kirsty
+
+# Verify user entry in passwd file
+grep kirsty /etc/passwd
+
+# Check user's expiry date
+chage -l kirsty
+
+# Alternative method to check expiry
+passwd -S kirsty
+✅ Validation Steps
+✅ User kirstycreated successfully
+✅ User expiry date set to 2024-02-17
+✅ User entry exists in /etc/passwd
+✅ User created in lowercase as per protocol
+
+=====================================
+
+Lab Performed 
+
+thor@jumphost ~$ ssh tony@stapp01.stratos.xfusioncorp.com
+The authenticity of host 'stapp01.stratos.xfusioncorp.com (172.17.0.6)' can't be established.
+ED25519 key fingerprint is SHA256:zMwiQ9xDc/dPi4FlOwFhacpW74tpBEJ2cSQulHeyGJE.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01.stratos.xfusioncorp.com' (ED25519) to the list of known hosts.
+tony@stapp01.stratos.xfusioncorp.com's password: 
+[tony@stapp01 ~]$
+ 
+[tony@stapp01 ~]$ sudo useradd -e 2024-02-17 kirsty
+ 
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+ 
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+ 
+[sudo] password for tony: 
+[tony@stapp01 ~]$ sudo passwd kirsty
+Changing password for user kirsty.
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[tony@stapp01 ~]$
+ 
+
+
+[tony@stapp01 ~]$ sudo chage -l kirsty
+Last password change                                    : Oct 23, 2025
+Password expires                                        : never
+Password inactive                                       : never
+Account expires                                         : Feb 17, 2024
+Minimum number of days between password change          : 0
+Maximum number of days between password change          : 99999
+Number of days of warning before password expires       : 7
