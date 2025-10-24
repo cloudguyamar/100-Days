@@ -1,0 +1,160 @@
+🚀 Day 3 of 100 Days of DevOps: Secure Root SSH Access
+🎯 Challenge: 100 Days of DevOps with KodeKloud
+🖥️ Server Details
+
+Server Name	IP Address	Hostname	User	Purpose
+stapp01	172.16.238.10	stapp01.stratos.xfusioncorp.com	tony	Nautilus App 1
+stapp02	172.16.238.11	stapp02.stratos.xfusioncorp.com	steve	Nautilus App 2
+stapp03	172.16.238.12	stapp03.stratos.xfusioncorp.com	banner	Nautilus App 3
+
+📋 Lab Overview
+Scenario: xFusionCorp Industries security team has rolled out new protocols following security audits, including restriction of direct root SSH login.
+
+Objective: Disable direct SSH root login on all app servers within the Stratos Datacenter.
+
+🔧 Step-by-Step Solution
+App Server 1 (stapp01)
+Step 1: Connect to App Server 1
+# SSH into App Server 1
+ssh tony@stapp01.stratos.xfusioncorp.com
+Step 2: Switch to Root User
+# Switch to root for SSH configuration
+sudo su -
+Step 3: Edit SSH Configuration
+# Backup original SSH config
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+# Edit SSH configuration file
+vi /etc/ssh/sshd_config
+Step 4: Modify Root Login Setting
+# Find and change PermitRootLogin to no
+# Change: #PermitRootLogin yes
+# To: PermitRootLogin no
+Step 5: Restart SSH Service
+# Restart SSH service to apply changes
+systemctl restart sshd
+
+# Verify SSH service status
+systemctl status sshd
+App Server 2 (stapp02)
+Step 1: Connect to App Server 2
+# SSH into App Server 2
+ssh steve@stapp02.stratos.xfusioncorp.com
+Step 2: Switch to Root User
+# Switch to root for SSH configuration
+sudo su -
+Step 3: Edit SSH Configuration
+# Backup original SSH config
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+# Edit SSH configuration file
+vi /etc/ssh/sshd_config
+Step 4: Modify Root Login Setting
+# Find and change PermitRootLogin to no
+# Change: #PermitRootLogin yes
+# To: PermitRootLogin no
+Step 5: Restart SSH Service
+# Restart SSH service to apply changes
+systemctl restart sshd
+
+# Verify SSH service status
+systemctl status sshd
+App Server 3 (stapp03)
+Step 1: Connect to App Server 3
+# SSH into App Server 3
+ssh banner@stapp03.stratos.xfusioncorp.com
+Step 2: Switch to Root User
+# Switch to root for SSH configuration
+sudo su -
+Step 3: Edit SSH Configuration
+# Backup original SSH config
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+# Edit SSH configuration file
+vi /etc/ssh/sshd_config
+Step 4: Modify Root Login Setting
+# Find and change PermitRootLogin to no
+# Change: #PermitRootLogin yes
+# To: PermitRootLogin no
+Step 5: Restart SSH Service
+# Restart SSH service to apply changes
+systemctl restart sshd
+
+# Verify SSH service status
+systemctl status sshd
+Verification Commands (Run on each server)
+# Check SSH configuration
+grep "PermitRootLogin" /etc/ssh/sshd_config
+
+# Test SSH service configuration
+sshd -t
+
+# Verify SSH service is running
+systemctl is-active sshd
+✅ Validation Steps
+✅ SSH configuration backed up on all servers
+✅ PermitRootLogin set to 'no' on all servers
+✅ SSH service restarted successfully on all servers
+✅ Direct root SSH login disabled on all app serverss
+
+
+LAB Performed
+--------------
+
+[root@stapp01 ~]# cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+[root@stapp01 ~]# vi /etc/ssh/sshd_config
+[root@stapp01 ~]# systemctl restart sshd
+[root@stapp01 ~]# systemctl status sshd
+● sshd.service - OpenSSH server daemon
+     Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2025-10-24 12:55:25 UTC; 11s ago
+       Docs: man:sshd(8)
+             man:sshd_config(5)
+   Main PID: 2092 (sshd)
+      Tasks: 1 (limit: 411434)
+     Memory: 2.2M
+     CGroup: /docker/dc953aab6078aa786dc95acfd13b24627adb3a395a1c22b79077d69b70a78a05/system.slice/sshd.service
+             └─2092 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
+
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[1]: sshd.service: Changed dead -> start
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[1]: Starting OpenSSH server daemon...
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[2092]: sshd.service: Executing: /usr/sbin/sshd -D
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com sshd[2092]: Server listening on 0.0.0.0 port 22.
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com sshd[2092]: Server listening on :: port 22.
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[1]: sshd.service: Got notification message from PID 2092 (READY=1)
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[1]: sshd.service: Changed start -> running
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[1]: sshd.service: Job 278 sshd.service/start finished, result=done
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[1]: Started OpenSSH server daemon.
+Oct 24 12:55:25 stapp01.stratos.xfusioncorp.com systemd[1]: sshd.service: Failed to send unit change signal for sshd.service: Connection reset by peer
+[root@stapp01 ~]# 
+
+
+🔐 Why secure (or disable) root SSH access
+ 
+1. Reduce attack surface
+ 
+The username root is well-known, so attackers often attempt brute-force or credential-stuffing attacks directly against root@server.
+ 
+Disabling direct root SSH login means an attacker must first compromise a normal user account before escalating privileges — adding an extra layer of security.
+ 
+ 
+ 
+2. Audit and accountability
+ 
+If multiple admins log in as root directly, it’s impossible to tell who did what.
+ 
+By requiring users to log in with their own accounts and then use sudo (which logs every command), you can track actions per user.
+ 
+ 
+ 
+3. Safer privilege escalation
+ 
+Using sudo or su ensures privilege escalation is deliberate and logged.
+ 
+This helps prevent accidental or unauthorized root-level changes.
+ 
+ 
+ 
+4. Limit exposure of the most powerful account
+ 
+Root has complete control of the system. Protecting it behind an additional authentication step limits potential damage if SSH credentials are stolen.
