@@ -1,0 +1,91 @@
+🚀 Day 4 of 100 Days of DevOps: Script Execution Permissions
+
+🖥️ Server Details
+
+Server Name	IP Address	Hostname	User	Purpose
+stapp01	172.16.238.10	stapp01.stratos.xfusioncorp.com	tony	Nautilus App 1
+
+📋 Lab Overview
+Scenario: xFusionCorp Industries sysadmin team has developed a bash script named xfusioncorp.sh to automate backup processes. The script lacks executable permissions on App Server 1.
+
+Objective: Grant executable permissions to /tmp/xfusioncorp.sh script on App Server 1 a and ensure all users can execute it.
+
+🔧 Step-by-Step Solution
+Step 1: Connect to App Server 1
+# SSH into App Server 1 (stapp01 - Nautilus App 1)
+ssh tony@stapp01.stratos.xfusioncorp.com
+# OR using IP address
+ssh tony@172.16.238.10
+Step 2: Switch to Root User
+# Switch to root for file permission changes
+sudo su -
+Step 3: Check Current Script Permissions
+# Check current permissions of the script
+ls -la /tmp/xfusioncorp.sh
+
+# View detailed file information
+stat /tmp/xfusioncorp.sh
+Step 4: Grant Executable Permissions for All Users
+# Method 1: Add execute permission for all users (owner, group, others)
+chmod +x /tmp/xfusioncorp.sh
+
+# Method 2: Set specific permissions (read and execute for all)
+chmod 755 /tmp/xfusioncorp.sh
+
+# Method 3: Using symbolic notation
+chmod a+x /tmp/xfusioncorp.sh
+Step 5: Verify Permissions
+# Check updated permissions
+ls -la /tmp/xfusioncorp.sh
+
+# Verify all users can execute
+stat /tmp/xfusioncorp.sh
+Step 6: Test Script Execution
+# Test script execution as current user
+/tmp/xfusioncorp.sh
+
+# Check if script runs without permission errors
+bash /tmp/xfusioncorp.sh
+✅ Validation Steps
+✅ Script /tmp/xfusioncorp.sh exists on App Server 1
+✅ Execute permissions granted for all users (owner, group, others)
+✅ File permissions show executable bits set (-rwxr-xr-x)
+✅ Script can be executed by all users without permission errors
+
+
+
+
+LAB Performed
+
+
+[root@stapp01 ~]# ls -la /tmp/xfusioncorp.sh
+---------- 1 root root 40 Oct 25 14:27 /tmp/xfusioncorp.sh
+[root@stapp01 ~]# stat /tmp/xfusioncorp.sh
+  File: /tmp/xfusioncorp.sh
+  Size: 40              Blocks: 8          IO Block: 4096   regular file
+Device: 300046h/3145798d        Inode: 90973846    Links: 1
+Access: (0000/----------)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2025-10-25 14:27:29.000000000 +0000
+Modify: 2025-10-25 14:27:29.000000000 +0000
+Change: 2025-10-25 14:27:48.245568479 +0000
+ Birth: 2025-10-25 14:27:48.133568555 +0000
+[root@stapp01 ~]# chmod +x /tmp/xfusioncorp.sh
+[root@stapp01 ~]# ls -la /tmp/xfusioncorp.sh
+---x--x--x 1 root root 40 Oct 25 14:27 /tmp/xfusioncorp.sh
+[root@stapp01 ~]# stat /tmp/xfusioncorp.sh
+  File: /tmp/xfusioncorp.sh
+  Size: 40              Blocks: 8          IO Block: 4096   regular file
+Device: 300046h/3145798d        Inode: 90973846    Links: 1
+Access: (0111/---x--x--x)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2025-10-25 14:27:29.000000000 +0000
+Modify: 2025-10-25 14:27:29.000000000 +0000
+Change: 2025-10-25 14:29:53.169484101 +0000
+ Birth: 2025-10-25 14:27:48.133568555 +0000
+[root@stapp01 ~]# chmod 755 /tmp/xfusioncorp.sh
+[root@stapp01 ~]# ls -la /tmp/xfusioncorp.sh
+-rwxr-xr-x 1 root root 40 Oct 25 14:27 /tmp/xfusioncorp.sh
+[root@stapp01 ~]# /tmp/xfusioncorp.sh
+Welcome To KodeKloud
+[root@stapp01 ~]# bash /tmp/xfusioncorp.sh
+Welcome To KodeKloud
+[root@stapp01 ~]# 
