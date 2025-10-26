@@ -1,0 +1,244 @@
+Day 5 of 100 Days: SELinux Installation and Configuration
+
+🖥️ Server Details
+| Server Name | IP Address | Hostname | User | Purpose | |---
+
+stapp03	172.16.238.12	stapp03.stratos.xfusioncorp.com	banner	BigGr33n	Nautilus App 3
+
+🔹 SELinux Overview
+What is SELinux? SELinux is a Linux kernel security module that enforces security policies using labels on files, processes, and ports.
+
+Why SELinux? Traditional Linux permissions (user, group, others) are not enough for advanced security. SELinux prevents processes from doing things they are not explicitly allowed to, even if the standard permissions allow it.
+
+-------------|------------|----------|------|---------| | stapp02 | 172.16.238.11 | stapp02.stratos.xfusioncorp.com | steve | Nautilus App 2 |
+
+📋 Lab Overview
+
+Following a security audit, the xFusionCorp Industries security team has opted to enhance application and server security with SELinux. 
+To initiate testing, the following requirements have been established for App server 3 in the Stratos Datacenter:
+
+
+
+Install the required SELinux packages.
+
+Permanently disable SELinux for the time being; it will be re-enabled after necessary configuration changes.
+
+No need to reboot the server, as a scheduled maintenance reboot is already planned for tonight.
+
+Disregard the current status of SELinux via the command line; the final status after the reboot should be disabled.
+
+🔧 Step-by-Step Solution
+Step 1: Connect to App Server 2
+# SSH into App Server 3 (stapp03 - Nautilus App 3)
+ssh steve@stapp03.stratos.xfusioncorp.com
+# OR using IP address
+ssh steve@172.16.*.*
+
+Step 2: Switch to Root User
+# Switch to root for SELinux management
+sudo su -
+Step 3: Check Current SELinux Status
+# Check current SELinux status
+sestatus
+
+# Alternative command to check status
+getenforce
+Step 4: Install SELinux Packages
+# Install required SELinux packages
+sudo yum install selinux-policy selinux-policy-targeted policycoreutils
+
+Step 5: Permanently Disable SELinux
+# Edit SELinux configuration file
+vi /etc/selinux/config
+
+# Change SELINUX=enforcing to SELINUX=disabled
+# The file should contain: SELINUX=disabled
+Step 6: Alternative Method to Disable SELinux
+
+# Use sed command to change configuration
+sed -i 's/^SELINUX=enforcing$/SELINUX=disabled/' /etc/selinux/config
+
+# Or use this command
+sed -i 's/^SELINUX=permissive$/SELINUX=disabled/' /etc/selinux/config
+Step 7: Verify Configuration Changes
+# Check the SELinux configuration file
+cat /etc/selinux/config
+
+# Verify the SELINUX parameter is set to disabled
+grep "SELINUX=disabled" /etc/selinux/config
+Step 8: Check Current Runtime Status (Optional)
+# Check current runtime status (will show current state)
+sestatus
+
+# Check enforcement mode
+getenforce
+✅ Validation Steps
+✅ SELinux packages installed successfully
+✅ SELinux configuration file modified (/etc/selinux/config)
+✅ SELINUX parameter set to 'disabled'
+
+
+
+LAB Performed
+=================
+
+thor@jumphost ~$ ssh banner@stapp03.stratos.xfusioncorp.com
+The authenticity of host 'stapp03.stratos.xfusioncorp.com (172.17.0.5)' can't be established.
+ED25519 key fingerprint is SHA256:2rAeWin48GJ10oz9Q94kCvqylRsGUTQ4OsJX6f1loFA.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03.stratos.xfusioncorp.com' (ED25519) to the list of known hosts.
+banner@stapp03.stratos.xfusioncorp.com's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# 
+
+
+[root@stapp03 ~]# cat /etc/os-release 
+NAME="CentOS Stream"
+VERSION="9"
+ID="centos"
+ID_LIKE="rhel fedora"
+VERSION_ID="9"
+PLATFORM_ID="platform:el9"
+PRETTY_NAME="CentOS Stream 9"
+ANSI_COLOR="0;31"
+LOGO="fedora-logo-icon"
+CPE_NAME="cpe:/o:centos:centos:9"
+HOME_URL="https://centos.org/"
+BUG_REPORT_URL="https://issues.redhat.com/"
+REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux 9"
+REDHAT_SUPPORT_PRODUCT_VERSION="CentOS Stream"
+
+[root@stapp03 ~]# sestatus
+-bash: sestatus: command not found
+[root@stapp03 ~]# getenforce
+-bash: getenforce: command not found
+[root@stapp03 ~]# yum install -y policycoreutils policycoreutils-python selinux-policy selinux-policy-targeted libselinux-utils setroubleshoot-server setools setools-console mcstrans^C
+[root@stapp03 ~]# cat /etc/os-release 
+NAME="CentOS Stream"
+VERSION="9"
+ID="centos"
+ID_LIKE="rhel fedora"
+VERSION_ID="9"
+PLATFORM_ID="platform:el9"
+PRETTY_NAME="CentOS Stream 9"
+ANSI_COLOR="0;31"
+LOGO="fedora-logo-icon"
+CPE_NAME="cpe:/o:centos:centos:9"
+HOME_URL="https://centos.org/"
+BUG_REPORT_URL="https://issues.redhat.com/"
+REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux 9"
+REDHAT_SUPPORT_PRODUCT_VERSION="CentOS Stream"
+[root@stapp03 ~]# yum install -y policycoreutils policycoreutils-python selinux-policy selinux-policy-targeted libselinux-utils setroubleshoot-server setools setools-console mcstrans
+CentOS Stream 9 - BaseOS                  25 kB/s | 7.3 kB     00:00    
+CentOS Stream 9 - BaseOS                  13 MB/s | 8.8 MB     00:00    
+CentOS Stream 9 - AppStream               66 kB/s | 7.5 kB     00:00    
+CentOS Stream 9 - AppStream               30 MB/s |  25 MB     00:00    
+CentOS Stream 9 - Extras packages        552  B/s | 8.3 kB     00:15    
+CentOS Stream 9 - Extras packages         23 kB/s |  20 kB     00:00    
+Extra Packages for Enterprise Linux 9 -  131 kB/s |  30 kB     00:00    
+Extra Packages for Enterprise Linux 9 -   31 MB/s |  20 MB     00:00    
+
+Extra Packages for Enterprise Linux 9 op 6.0 kB/s | 993  B     00:00    
+Extra Packages for Enterprise Linux 9 -   92 kB/s |  25 kB     00:00    
+No match for argument: policycoreutils-python
+Error: Unable to find a match: policycoreutils-python
+[root@stapp03 ~]# 
+[root@stapp03 ~]# yum install -y policycoreutils policycoreutils-python selinux-policy selinux-policy-targeted libselinux-utils setroubleshoot-server setools setools-console mcstrans
+Last metadata expiration check: 0:00:10 ago on Sun Oct 26 13:12:51 2025.
+No match for argument: policycoreutils-python
+Error: Unable to find a match: policycoreutils-python
+[root@stapp03 ~]# sudo yum install selinux-policy selinux-policy-targeted policycoreutils
+Last metadata expiration check: 0:00:33 ago on Sun Oct 26 13:12:51 2025.
+Dependencies resolved.
+=========================================================================
+ Package                    Arch      Version            Repo       Size
+=========================================================================
+Installing:
+ policycoreutils            x86_64    3.6-3.el9          baseos    239 k
+ selinux-policy             noarch    38.1.65-1.el9      baseos     42 k
+ selinux-policy-targeted    noarch    38.1.65-1.el9      baseos    6.9 M
+Installing dependencies:
+ diffutils                  x86_64    3.7-12.el9         baseos    397 k
+ libselinux-utils           x86_64    3.6-3.el9          baseos    190 k
+ rpm-plugin-selinux         x86_64    4.16.1.3-38.el9    baseos     16 k
+
+Transaction Summary
+=========================================================================
+Install  6 Packages
+
+Total download size: 7.8 M
+Installed size: 21 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/6): libselinux-utils-3.6-3.el9.x86_64 1.4 MB/s | 190 kB     00:00    
+(2/6): policycoreutils-3.6-3.el9.x86_64. 1.7 MB/s | 239 kB     00:00    
+(3/6): diffutils-3.7-12.el9.x86_64.rpm   2.6 MB/s | 397 kB     00:00    
+(4/6): rpm-plugin-selinux-4.16.1.3-38.el 978 kB/s |  16 kB     00:00    
+(5/6): selinux-policy-38.1.65-1.el9.noar 2.3 MB/s |  42 kB     00:00    
+(6/6): selinux-policy-targeted-38.1.65-1  61 MB/s | 6.9 MB     00:00    
+-------------------------------------------------------------------------
+Total                                     18 MB/s | 7.8 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Running scriptlet: selinux-policy-targeted-38.1.65-1.el9.noarch    1/1 
+  Preparing        :                                                 1/1 
+  Installing       : libselinux-utils-3.6-3.el9.x86_64               1/6 
+  Installing       : diffutils-3.7-12.el9.x86_64                     2/6 
+  Installing       : policycoreutils-3.6-3.el9.x86_64                3/6 
+  Running scriptlet: policycoreutils-3.6-3.el9.x86_64                3/6 
+Created symlink /etc/systemd/system/sysinit.target.wants/selinux-autorelabel-mark.service → /usr/lib/systemd/system/selinux-autorelabel-mark.service.
+
+  Installing       : selinux-policy-38.1.65-1.el9.noarch             4/6 
+  Running scriptlet: selinux-policy-38.1.65-1.el9.noarch             4/6 
+  Running scriptlet: selinux-policy-targeted-38.1.65-1.el9.noarch    5/6 
+  Installing       : selinux-policy-targeted-38.1.65-1.el9.noarch    5/6 
+  Running scriptlet: selinux-policy-targeted-38.1.65-1.el9.noarch    5/6 
+  Installing       : rpm-plugin-selinux-4.16.1.3-38.el9.x86_64       6/6 
+  Running scriptlet: selinux-policy-targeted-38.1.65-1.el9.noarch    6/6 
+  Running scriptlet: rpm-plugin-selinux-4.16.1.3-38.el9.x86_64       6/6 
+  Verifying        : diffutils-3.7-12.el9.x86_64                     1/6 
+  Verifying        : libselinux-utils-3.6-3.el9.x86_64               2/6 
+  Verifying        : policycoreutils-3.6-3.el9.x86_64                3/6 
+  Verifying        : rpm-plugin-selinux-4.16.1.3-38.el9.x86_64       4/6 
+  Verifying        : selinux-policy-38.1.65-1.el9.noarch             5/6 
+  Verifying        : selinux-policy-targeted-38.1.65-1.el9.noarch    6/6 
+
+Installed:
+  diffutils-3.7-12.el9.x86_64                                            
+  libselinux-utils-3.6-3.el9.x86_64                                      
+  policycoreutils-3.6-3.el9.x86_64                                       
+  rpm-plugin-selinux-4.16.1.3-38.el9.x86_64                              
+  selinux-policy-38.1.65-1.el9.noarch                                    
+  selinux-policy-targeted-38.1.65-1.el9.noarch                           
+
+Complete!
+[root@stapp03 ~]# sudo vi /etc/selinux/config
+[root@stapp03 ~]# grep SELINUX= /etc/selinux/config
+# SELINUX= can take one of these three values:
+# NOTE: Up to RHEL 8 release included, SELINUX=disabled would also
+SELINUX=disabled
+[root@stapp03 ~]# sestatus
+SELinux status:                 disabled
+[root@stapp03 ~]# getenforce
+Disabled
+[root@stapp03 ~]# 
+
+
+Key Takeaways
+
+SELinux adds a policy-based security layer that works alongside traditional Linux permissions
+Permanent changes to SELinux state require editing /etc/selinux/config
+✅ Configuration will take effect after scheduled reboot
