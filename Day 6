@@ -1,0 +1,198 @@
+🚀 Day 6 of 100 Days: Create a Cron Job
+
+🖥️ Server Details
+Server Name	IP Address	Hostname	User	Purpose
+stapp01	172.16.238.10	stapp01.stratos.xfusioncorp.com	tony	Nautilus App 1
+stapp02	172.16.238.11	stapp02.stratos.xfusioncorp.com	steve	Nautilus App 2
+stapp03	172.16.238.12	stapp03.stratos.xfusioncorp.com	banner	Nautilus App 3
+📋 Lab Overview
+Scenario: Nautilus system admins team has prepared scripts to automate day-to-day tasks and wants to deploy them on a set schedule.
+
+Objective: Install cronie package on all app servers, start crond service, and add a sample cron job for root user.
+
+🔹 Cron Jobs Overview
+What is Cron? Cron is a time-based job scheduler in Linux that allows you to run commands or scripts automatically at specified times and intervals.
+
+Why Use Cron? Automates repetitive tasks like backups, system monitoring, log rotation, and maintenance without manual intervention. Essential for system administration and DevOps automation.
+
+🔧 Step-by-Step Solution
+App Server 1 (stapp01)
+Step 1: Connect to App Server 1
+# SSH into App Server 1
+ssh tony@stapp01.stratos.xfusioncorp.com
+Step 2: Switch to Root User
+# Switch to root for cron management
+sudo su -
+Step 3: Install Cronie Package
+# Install cronie package
+yum install -y cronie
+
+# Alternative for newer systems
+dnf install -y cronie
+Step 4: Start and Enable Crond Service
+# Start crond service
+systemctl start crond
+
+# Enable crond service to start on boot
+systemctl enable crond
+
+# Check service status
+systemctl status crond
+Step 5: Add Cron Job for Root User
+# Open root's crontab
+crontab -e
+
+# Add the following line:
+# */5 * * * * echo hello > /tmp/cron_text
+Step 6: Verify Cron Job
+# List current cron jobs for root
+crontab -l
+
+# Check if crond is running
+ps aux | grep crond
+App Server 2 (stapp02)
+Step 1: Connect to App Server 2
+# SSH into App Server 2
+ssh steve@stapp02.stratos.xfusioncorp.com
+Step 2: Switch to Root User
+# Switch to root for cron management
+sudo su -
+Step 3: Install Cronie Package
+# Install cronie package
+yum install -y cronie
+Step 4: Start and Enable Crond Service
+# Start crond service
+systemctl start crond
+
+# Enable crond service to start on boot
+systemctl enable crond
+
+# Check service status
+systemctl status crond
+Step 5: Add Cron Job for Root User
+# Open root's crontab
+crontab -e
+
+# Add the following line:
+# */5 * * * * echo hello > /tmp/cron_text
+Step 6: Verify Cron Job
+# List current cron jobs for root
+crontab -l
+App Server 3 (stapp03)
+Step 1: Connect to App Server 3
+# SSH into App Server 3
+ssh banner@stapp03.stratos.xfusioncorp.com
+Step 2: Switch to Root User
+# Switch to root for cron management
+sudo su -
+Step 3: Install Cronie Package
+# Install cronie package
+yum install -y cronie
+Step 4: Start and Enable Crond Service
+# Start crond service
+systemctl start crond
+
+# Enable crond service to start on boot
+systemctl enable crond
+
+# Check service status
+systemctl status crond
+Step 5: Add Cron Job for Root User
+# Open root's crontab
+crontab -e
+
+# Add the following line:
+# */5 * * * * echo hello > /tmp/cron_text
+Step 6: Verify Cron Job
+# List current cron jobs for root
+crontab -l
+Final Verification (All Servers)
+# Wait for 5 minutes and check if file is created
+ls -la /tmp/cron_text
+
+# Check file contents
+cat /tmp/cron_text
+
+# Monitor cron logs
+tail -f /var/log/cron
+✅ Validation Steps
+✅ Cronie package installed on all three app servers
+✅ Crond service started and enabled on all servers
+✅ Cron job added for a root user (runs every 5 minutes)
+
+
+
+
+LAB Performed
+-------------
+
+
+
+[root@stapp01 ~]# yum install -y cronie
+CentOS Stream 9 - BaseOS                  35 kB/s | 7.3 kB     00:00    
+CentOS Stream 9 - BaseOS                 1.9 MB/s | 8.8 MB     00:04    
+CentOS Stream 9 - AppStream               45 kB/s | 7.5 kB     00:00    
+CentOS Stream 9 - AppStream              2.1 MB/s |  25 MB     00:12    
+CentOS Stream 9 - Extras packages         39 kB/s | 8.3 kB     00:00    
+CentOS Stream 9 - Extras packages         33 kB/s |  20 kB     00:00    
+Extra Packages for Enterprise Linux 9 -  152 kB/s |  36 kB     00:00    
+Extra Packages for Enterprise Linux 9 -   13 MB/s |  20 MB     00:01    
+Extra Packages for Enterprise Linux 9 op 4.7 kB/s | 993  B     00:00    
+Extra Packages for Enterprise Linux 9 -   87 kB/s |  25 kB     00:00    
+Package cronie-1.5.7-14.el9.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+[root@stapp01 ~]# dnf install -y cronie
+Last metadata expiration check: 0:00:08 ago on Mon Oct 27 18:06:24 2025.
+Package cronie-1.5.7-14.el9.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+[root@stapp01 ~]# systemctl start crond
+[root@stapp01 ~]# systemctl enable crond
+[root@stapp01 ~]# systemctl status crond
+● crond.service - Command Scheduler
+     Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; preset: enabled)
+     Active: active (running) since Mon 2025-10-27 18:03:19 UTC; 3min 45s ago
+   Main PID: 1017 (crond)
+      Tasks: 1 (limit: 411434)
+     Memory: 1.0M
+     CGroup: /docker/ba1273858023cfd49c5d7d2132a3e3aeafa3f961d56e882830fa54a3ed00ce1b/system.slice/crond.service
+             └─1017 /usr/sbin/crond -n
+
+Oct 27 18:03:19 stapp01.stratos.xfusioncorp.com crond[1017]: (CRON) INFO (RANDOM_DELAY will be scaled with factor 30% if used.)
+Oct 27 18:03:19 stapp01.stratos.xfusioncorp.com crond[1017]: (CRON) INFO (running with inotify support)
+Oct 27 18:06:44 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to enqueue job crond.service/start/replace
+Oct 27 18:06:44 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Installed new job crond.service/start as 238
+Oct 27 18:06:44 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued job crond.service/start as 238
+Oct 27 18:06:44 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Job 238 crond.service/start finished, result=done
+Oct 27 18:06:56 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Changed dead -> running
+Oct 27 18:06:56 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to reset devices.allow/devices.deny: Operation not permitted
+Oct 27 18:06:56 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to set 'trusted.invocation_id' xattr on control group /docker/ba1273858023cfd49c5d7d2132a3e3aeafa3f961d56e882830fa54a3ed00ce1b/system.slice/crond.service, ignoring: Operation not permitted
+Oct 27 18:06:56 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to remove 'trusted.delegate' xattr flag on control group /docker/ba1273858023cfd49c5d7d2132a3e3aeafa3f961d56e882830fa54a3ed00ce1b/system.slice/crond.service, ignoring: Operation not permitted
+[root@stapp01 ~]# 
+
+
+[root@stapp01 ~]# crontab -e
+no crontab for root - using an empty one
+crontab: installing new crontab
+[root@stapp01 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp01 ~]# ps aux | grep crond
+root        1017  0.0  0.0   6044  3496 ?        Ss   18:03   0:00 /usr/sbin/crond -n
+root        2264  0.0  0.0   3728  1992 pts/0    S+   18:08   0:00 grep --color=auto crond
+[root@stapp01 ~]# 
+
+[root@stapp01 ~]# ls -la /tmp/cron_text
+-rw-r--r-- 1 root root 6 Oct 27 18:15 /tmp/cron_text
+[root@stapp01 ~]# cat /tmp/cron_text
+^C
+[root@stapp01 ~]# cat /tmp/cron_text
+hello
+[root@stapp01 ~]# tail -f /var/log/cron
+tail: cannot open '/var/log/cron' for reading: No such file or directory
+tail: no files remaining
+
+
+✅ Cron job creates /tmp/cron_text file with "hello" content
