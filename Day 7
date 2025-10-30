@@ -1,0 +1,185 @@
+🚀 Day 7 of 100 Days: Linux SSH Authentication
+
+🖥️ Server Details
+Server Name	IP Address	Hostname	User	Purpose
+jumphost	-	-	thor	Jump Server
+stapp01	172.16.238.10	stapp01.stratos.xfusioncorp.com	tony	Nautilus App 1
+stapp02	172.16.238.11	stapp02.stratos.xfusioncorp.com	steve	Nautilus App 2
+stapp03	172.16.238.12	stapp03.stratos.xfusioncorp.com	banner	Nautilus App 3
+📋 Lab Overview
+Scenario: xFusionCorp Industries system admins team has set up scripts on jump host that run on regular intervals and perform operations on all app servers.
+
+Objective: Set up password-less SSH authentication from user thor on jump host to all app servers through their respective sudo users.
+
+🔹 SSH Key Authentication Overview
+What is SSH Key Authentication? SSH key authentication uses a pair of cryptographic keys (public and private) instead of passwords for secure authentication.
+
+Why Use SSH Keys? More secure than passwords, enables automation without manual password entry, prevents brute force attacks, and allows centralized key management.
+
+🔧 Step-by-Step Solution
+Step 1: Generate SSH Key Pair on Jump Host
+# Generate SSH key pair for thor user (run on jump host)
+ssh-keygen -t rsa -b 4096
+
+# Press Enter for default file location (~/.ssh/id_rsa)
+# Press Enter twice for no passphrase (password-less access)
+Step 2: Verify SSH Key Generation
+# Check generated keys
+ls -la ~/.ssh/
+
+# View public key content
+cat ~/.ssh/id_rsa.pub
+
+# View private key (keep this secure)
+ls -la ~/.ssh/id_rsa
+Step 3: Copy Public Key to App Server 1
+# Copy SSH public key to tony@stapp01
+ssh-copy-id tony@stapp01.stratos.xfusioncorp.com
+
+# Alternative method using IP
+ssh-copy-id tony@172.16.238.10
+Step 4: Copy Public Key to App Server 2
+# Copy SSH public key to steve@stapp02
+ssh-copy-id steve@stapp02.stratos.xfusioncorp.com
+
+# Alternative method using IP
+ssh-copy-id steve@172.16.238.11
+Step 5: Copy Public Key to App Server 3
+# Copy SSH public key to banner@stapp03
+ssh-copy-id banner@stapp03.stratos.xfusioncorp.com
+
+# Alternative method using IP
+ssh-copy-id banner@172.16.238.12
+Step 6: Test Password-less SSH Access
+# Test SSH access to App Server 1 (should not prompt for password)
+ssh tony@stapp01.stratos.xfusioncorp.com
+
+# Exit and test App Server 2
+exit
+ssh steve@stapp02.stratos.xfusioncorp.com
+
+# Exit and test App Server 3
+exit
+ssh banner@stapp03.stratos.xfusioncorp.com
+Step 7: Verify SSH Configuration on Remote Servers
+# On each app server, check authorized_keys file
+cat ~/.ssh/authorized_keys
+
+# Check SSH directory permissions
+ls -la ~/.ssh/
+
+
+
+
+
+
+
+LAB Performed
+--------------
+
+thor@jumphost ~$ ssh-keygen -t rsa -b 4096
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/thor/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/thor/.ssh/id_rsa
+Your public key has been saved in /home/thor/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:xWm4qt2sLs/apW5GPeA2SylxXXGdpmb4fY5Cl16jGgU thor@jumphost.stratos.xfusioncorp.com
+The key's randomart image is:
++---[RSA 4096]----+
+|          .... . |
+|         o.o  +  |
+|       ...=E o   |
+|    . o .+. =    |
+|     + +S  + o . |
+|    . B.o   + +.o|
+|     =.o.. o o.=.|
+|    .=+=    o.o .|
+|    oOX.o  ...   |
++----[SHA256]-----+
+thor@jumphost ~$ ls -la ~/.ssh/
+total 24
+drwxr----- 2 thor thor 4096 Oct 30 17:03 .
+drwxr----- 1 thor thor 4096 Oct 30 17:01 ..
+-rwxr----- 1 thor thor  567 Oct 30 17:01 authorized_keys
+-rw------- 1 thor thor 3414 Oct 30 17:03 id_rsa
+-rw-r--r-- 1 thor thor  763 Oct 30 17:03 id_rsa.pub
+thor@jumphost ~$ ssh-copy-id tony@stapp01.stratos.xfusioncorp.com
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/thor/.ssh/id_rsa.pub"
+The authenticity of host 'stapp01.stratos.xfusioncorp.com (172.17.0.8)' can't be established.
+ED25519 key fingerprint is SHA256:F9vvF1H+O0H75WwEl0a8dpogpua7L0vSFx4aq5ikMWk.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+tony@stapp01.stratos.xfusioncorp.com's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'tony@stapp01.stratos.xfusioncorp.com'"
+and check to make sure that only the key(s) you wanted were added.
+
+thor@jumphost ~$ ssh-copy-id steve@stapp02.stratos.xfusioncorp.com
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/thor/.ssh/id_rsa.pub"
+The authenticity of host 'stapp02.stratos.xfusioncorp.com (172.17.0.4)' can't be established.
+ED25519 key fingerprint is SHA256:0gImb1qqHepj8iHOio6y3vpuqy71Ixj4CFBlwGmbW6U.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+steve@stapp02.stratos.xfusioncorp.com's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'steve@stapp02.stratos.xfusioncorp.com'"
+and check to make sure that only the key(s) you wanted were added.
+
+thor@jumphost ~$ ssh-copy-id banner@stapp03.stratos.xfusioncorp.com
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/thor/.ssh/id_rsa.pub"
+The authenticity of host 'stapp03.stratos.xfusioncorp.com (172.17.0.6)' can't be established.
+ED25519 key fingerprint is SHA256:sR28ABAD37sbh5IfACRJPLe/EUeVbRe+oRas4/ZaA4s.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+banner@stapp03.stratos.xfusioncorp.com's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'banner@stapp03.stratos.xfusioncorp.com'"
+and check to make sure that only the key(s) you wanted were added.
+
+thor@jumphost ~$ ssh tony@stapp01.stratos.xfusioncorp.com
+[tony@stapp01 ~]$ exit
+logout
+Connection to stapp01.stratos.xfusioncorp.com closed.
+thor@jumphost ~$ ssh steve@stapp02.stratos.xfusioncorp.com
+[steve@stapp02 ~]$ exit
+logout
+Connection to stapp02.stratos.xfusioncorp.com closed.
+thor@jumphost ~$ ssh banner@stapp03.stratos.xfusioncorp.com
+[banner@stapp03 ~]$ exit
+logout
+Connection to stapp03.stratos.xfusioncorp.com closed.
+thor@jumphost ~$ ssh tony@stapp01.stratos.xfusioncorp.com
+Last login: Thu Oct 30 17:06:15 2025 from 172.17.0.7
+[tony@stapp01 ~]$ cat ~/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHtkZCCMzSS6wNGqKCcLcUk2VZQh2TYyVAE6GT79di+cRHgZc+LNxuuTCzbVfL5tAm/NjsPQxvEUR7xBXVmfZe8BXwCKUZE3Z676N996QxAexCYbLg+a60uFs8SxF9mCRNQCTDXg6DK3wbD9fzGBk5ecG4Fxl0fS9T5HEOKXs0JKxusqjNaarzKHpoeMVzrNqjYBY2tD5N7tRU+ABa6yRNs4QpnAJ4PdIMo9uD61t0JMsNzJuqOaGtcOj3Ovlg9df2XW3MG1jzlsiewV7YlJQMQAVgWO6/4BeJJtTv8OJq2Jlr/dtHCbZqDh/d47D3ze7nGVp2RVIik4yy53/glqtexr3+2xjbfqTeiX0dbNvI+HV1nKyCChjiRcEhfudM5UtxrE3uXA/4c2tYBpHUq3mZpdmEa4AfX87fpfX1qF06WL8svg2styUXf6EXWQe5n35zsudU0Mv+ufQoCM9UAP8KiHShtfC/KWLc5Kw5A3sTzdo2gcDR6vlBDKsqfk2xfgzxYp2d1g3WSwg/I+9bFSESKYr/qikM4I0qVBX8FupzACKe/pl1KNGBAwHrXA1q9tM7+YEafkdaCbQnt75rjILIiHDZgrWhelLNrHbtDYmcAbZzE3VW7wj660HeLvsyQwlgGR4egt5OdI4vbIrOCWzYZoObn+Xihg6/d62qSNhUuw== thor@jumphost.stratos.xfusioncorp.com
+[tony@stapp01 ~]$ exit
+logout
+Connection to stapp01.stratos.xfusioncorp.com closed.
+thor@jumphost ~$ ssh steve@stapp02.stratos.xfusioncorp.com
+Last login: Thu Oct 30 17:06:34 2025 from 172.17.0.7
+[steve@stapp02 ~]$ cat ~/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHtkZCCMzSS6wNGqKCcLcUk2VZQh2TYyVAE6GT79di+cRHgZc+LNxuuTCzbVfL5tAm/NjsPQxvEUR7xBXVmfZe8BXwCKUZE3Z676N996QxAexCYbLg+a60uFs8SxF9mCRNQCTDXg6DK3wbD9fzGBk5ecG4Fxl0fS9T5HEOKXs0JKxusqjNaarzKHpoeMVzrNqjYBY2tD5N7tRU+ABa6yRNs4QpnAJ4PdIMo9uD61t0JMsNzJuqOaGtcOj3Ovlg9df2XW3MG1jzlsiewV7YlJQMQAVgWO6/4BeJJtTv8OJq2Jlr/dtHCbZqDh/d47D3ze7nGVp2RVIik4yy53/glqtexr3+2xjbfqTeiX0dbNvI+HV1nKyCChjiRcEhfudM5UtxrE3uXA/4c2tYBpHUq3mZpdmEa4AfX87fpfX1qF06WL8svg2styUXf6EXWQe5n35zsudU0Mv+ufQoCM9UAP8KiHShtfC/KWLc5Kw5A3sTzdo2gcDR6vlBDKsqfk2xfgzxYp2d1g3WSwg/I+9bFSESKYr/qikM4I0qVBX8FupzACKe/pl1KNGBAwHrXA1q9tM7+YEafkdaCbQnt75rjILIiHDZgrWhelLNrHbtDYmcAbZzE3VW7wj660HeLvsyQwlgGR4egt5OdI4vbIrOCWzYZoObn+Xihg6/d62qSNhUuw== thor@jumphost.stratos.xfusioncorp.com
+[steve@stapp02 ~]$ exit
+logout
+Connection to stapp02.stratos.xfusioncorp.com closed.
+thor@jumphost ~$ ssh banner@stapp03.stratos.xfusioncorp.com
+Last login: Thu Oct 30 17:06:48 2025 from 172.17.0.7
+[banner@stapp03 ~]$ cat ~/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHtkZCCMzSS6wNGqKCcLcUk2VZQh2TYyVAE6GT79di+cRHgZc+LNxuuTCzbVfL5tAm/NjsPQxvEUR7xBXVmfZe8BXwCKUZE3Z676N996QxAexCYbLg+a60uFs8SxF9mCRNQCTDXg6DK3wbD9fzGBk5ecG4Fxl0fS9T5HEOKXs0JKxusqjNaarzKHpoeMVzrNqjYBY2tD5N7tRU+ABa6yRNs4QpnAJ4PdIMo9uD61t0JMsNzJuqOaGtcOj3Ovlg9df2XW3MG1jzlsiewV7YlJQMQAVgWO6/4BeJJtTv8OJq2Jlr/dtHCbZqDh/d47D3ze7nGVp2RVIik4yy53/glqtexr3+2xjbfqTeiX0dbNvI+HV1nKyCChjiRcEhfudM5UtxrE3uXA/4c2tYBpHUq3mZpdmEa4AfX87fpfX1qF06WL8svg2styUXf6EXWQe5n35zsudU0Mv+ufQoCM9UAP8KiHShtfC/KWLc5Kw5A3sTzdo2gcDR6vlBDKsqfk2xfgzxYp2d1g3WSwg/I+9bFSESKYr/qikM4I0qVBX8FupzACKe/pl1KNGBAwHrXA1q9tM7+YEafkdaCbQnt75rjILIiHDZgrWhelLNrHbtDYmcAbZzE3VW7wj660HeLvsyQwlgGR4egt5OdI4vbIrOCWzYZoObn+Xihg6/d62qSNhUuw== thor@jumphost.stratos.xfusioncorp.com
+[banner@stapp03 ~]$ ls -la ~/.ssh/
+total 16
+thor@jumphost ~$ 
