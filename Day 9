@@ -1,0 +1,576 @@
+🛢️ Day 9 of 100 Days  – KodeKloud Challenge: MariaDB Troubleshooting
+Today, I diagnosed and resolved a MariaDB service outage on the Nautilus DB server (stdb01) and restored database connectivity for the Nautilus application. This lab reinforced the importance of systematic troubleshooting, log analysis, and database administration in production-like environments.
+
+📖 What is MariaDB?
+MariaDB is an open-source relational database management system (RDBMS) and a drop-in replacement for MySQL. It is widely used for:
+
+Data storage – manage structured application data efficiently
+Backend support – powers web applications and enterprise services
+High Availability – supports replication, clustering, and failover
+SQL querying – enables structured queries, transactions, and indexing
+Key Points:
+
+Open-source and widely adopted
+Fully compatible with MySQL clients and tools
+Managed via systemd on Linux servers
+Strong security, performance, and scalability features
+🛠️ Step-by-Step Commands Performed
+Step 1: Connect to the Database Server
+ssh peter@stdb01
+Connected securely to the Nautilus DB server to start troubleshooting.
+
+Step 2: Check MariaDB Service Status
+sudo systemctl status mariadb
+Verified that MariaDB was inactive. Initial logs suggested permission issues during startup.
+
+Step 3: Start MariaDB Service
+sudo systemctl start mariadb
+Started the database service. Initially failed due to file access permissions; resolved by ensuring correct ownership for /var/lib/mysql.
+
+Step 4: Enable MariaDB to Start Automatically on Boot
+sudo systemctl enable mariadb
+Configured MariaDB to start automatically after a server reboot, preventing future downtime.
+
+Step 5: Inspect Logs if Service Fails
+sudo journalctl -xeu mariadb.service
+sudo tail -n 50 /var/log/mariadb/mariadb.log
+Logs revealed InnoDB errors due to permission issues. Corrected directory access to allow proper initialization.
+
+Step 6: Log in to MariaDB as Root
+sudo mysql -u root -p
+Root access allowed performing administrative tasks like checking databases and user privileges.
+
+Step 7: Grant Remote Access to Application User
+GRANT ALL PRIVILEGES ON *.* TO 'peter'@'%' IDENTIFIED BY 'Sp!dy';
+FLUSH PRIVILEGES;
+Allowed the Nautilus application to connect remotely from any host.
+
+Step 8: Test Connectivity from Application Server
+mysql -h 172.16.239.10 -u peter -p
+Verified that the application could connect to the database successfully.
+
+✅ Key Takeaways
+Service Status: Always check systemctl status first to confirm service health
+Log Analysis: Essential for diagnosing permission or configuration issues
+User Privileges: Properly configured users and host permissions prevent remote connectivity errors
+Production Mindset: Stepwise troubleshooting reduces downtime and ensures reliability
+Hands-On Experience: Simulated real-world database administration and incident handling
+
+=======================================================================
+
+
+What is MariaDB?
+
+MariaDB is an open-source relational database management system (RDBMS) and a drop-in replacement for MySQL. It’s widely used for storing and managing structured data, supporting SQL queries, transactions, replication, and high availability setups. Many applications, including the Nautilus app here, depend on it for core functionality.
+
+Solution:
+
+Connected to the dbserver via SSH:
+ssh username@dbserver_ip
+2. Confirmed the status of the MariaDB service
+
+sudo systemctl status mariadb
+Output: service was inactive (dead).
+
+Press enter or click to view image in full size
+
+3. Since the service was inactive, I restarted it
+
+sudo systemctl start mariadb
+Output: I got an error:
+
+Press enter or click to view image in full size
+
+4. I checked the logs to see why the service failed
+
+sudo systemctl status mariadb --no-pager -l
+sudo journalctl -xeu mariadb --no-pager
+Output showed that: MariaDB sees leftover files in /var/lib/mysql but no proper initialized database. This could have occured due to a partial or failed installation ofthe service.
+
+Press enter or click to view image in full size
+
+5. I stopped the service:
+
+sudo systemctl stop mariadb
+6. Tried to back up the existing /var/lib/mysql directory
+
+Get Damilola Davids’s stories in your inbox
+Join Medium for free to get updates from this writer.
+
+Enter your email
+Subscribe
+This is so as not to lose anything that might be needed later. I then found out that the directory did not exist at all. MariaDB had nowhere to store data, so it refuses to start. This was the exact cause of the issue
+
+7. Created the directory with the correct ownership
+
+sudo mkdir /var/lib/mysql
+sudo chown mysql:mysql /var/lib/mysql
+sudo chmod 750 /var/lib/mysql
+8. Initialized the MariaDB data directory
+
+sudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+Output: Tables were built successfully
+
+Press enter or click to view image in full size
+
+9. Started MariaDB and checked the status to be sure it was running
+
+sudo systemctl start mariadb 
+sudo systemctl status mariadb
+Output: Active (running
+Press enter or click to view image in full size
+
+10. Enabled service at boot to prevent downtime when the system reboots.
+
+sudo systemctl enable mariadb
+11. Checked to see if the application could now connect to the database:
+
+sudo mysql -u root -p
+Output: The application could now connect to MariaDB
+
+Press enter or click to view image in full size
+
+Learning Note:
+MariaDB wouldn’t start simply because its data directory didn’t exist. The fix wasn’t just starting the service. It was creating the right directory, assigning correct permissions, and initializing system tables. The most critical part of troubleshooting is reading the logs carefully and acting on exactly what they say.
+
+
+
+
+LAB Performed:
+-------------
+
+
+thor@jumphost ~$ ssh peter@stdb01
+[peter@stdb01 ~]$ sudo systemctl status mariadb
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for peter: 
+○ mariadb.service - MariaDB 10.5 database server
+     Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; preset: disabled)
+     Active: inactive (dead) since Fri 2025-10-31 12:24:06 UTC; 4min 43s ago
+   Duration: 4.864s
+       Docs: man:mariadbd(8)
+             https://mariadb.com/kb/en/library/systemd/
+    Process: 874 ExecStartPre=/usr/libexec/mariadb-check-socket (code=exited, status=0/SUCCESS)
+    Process: 1081 ExecStartPre=/usr/libexec/mariadb-prepare-db-dir mariadb.service (code=exited, status=0/SUCCESS)
+    Process: 1442 ExecStart=/usr/libexec/mariadbd --basedir=/usr $MYSQLD_OPTS $_WSREP_NEW_CLUSTER (code=exited, status=0/SUCCESS)
+    Process: 1489 ExecStartPost=/usr/libexec/mariadb-check-upgrade (code=
+[root@stdb01 ~]# systemctl start mariadb
+Job for mariadb.service failed because the control process exited with error code.
+See "systemctl status mariadb.service" and "journalctl -xeu mariadb.service" for details.
+[root@stdb01 ~]# sudo systemctl status mariadb --no-pager -l
+× mariadb.service - MariaDB 10.5 database server
+     Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; preset: disabled)
+     Active: failed (Result: exit-code) since Fri 2025-10-31 12:29:08 UTC; 16s ago
+   Duration: 4.864s
+       Docs: man:mariadbd(8)
+             https://mariadb.com/kb/en/library/systemd/
+    Process: 2448 ExecStartPre=/usr/libexec/mariadb-check-socket (code=exited, status=0/SUCCESS)
+    Process: 2482 ExecStartPre=/usr/libexec/mariadb-prepare-db-dir mariadb.service (code=exited, status=1/FAILURE)
+
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[2482]: Make sure the /var/lib/mysql is empty before running mariadb-prepare-db-dir.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 2482 belongs to mariadb.service.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Control process exited, code=exited, status=1/FAILURE
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got final SIGCHLD for state start-pre.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed with result 'exit-code'.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Service will not restart (restart setting)
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed start-pre -> failed
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Job 278 mariadb.service/start finished, result=failed
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: Failed to start MariaDB 10.5 database server.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Unit entered failed state.
+[root@stdb01 ~]# journalctl -xeu mariadb --no-pager
+Oct 31 12:23:56 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: starting held back, waiting for: basic.target
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Will spawn child (service_enter_start_pre): /usr/libexec/mariadb-check-socket
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed to reset devices.allow/devices.deny: Operation not permitted
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed to set 'trusted.invocation_id' xattr on control group /docker/c35c05b8a472a9adf057998c9c1be359e22a5750b438aefed70bf3d822304cd6/system.slice/mariadb.service, ignoring: Operation not permitted
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed to remove 'trusted.delegate' xattr flag on control group /docker/c35c05b8a472a9adf057998c9c1be359e22a5750b438aefed70bf3d822304cd6/system.slice/mariadb.service, ignoring: Operation not permitted
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: About to execute /usr/libexec/mariadb-check-socket
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Forked /usr/libexec/mariadb-check-socket as 874
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: PR_SET_MM_ARG_START failed: Operation not permitted
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed dead -> start-pre
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: Starting MariaDB 10.5 database server...
+░░ Subject: A start job for unit mariadb.service has begun execution
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ A start job for unit mariadb.service has begun execution.
+░░ 
+░░ The job identifier is 71.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: User lookup succeeded: uid=27 gid=27
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Bind-mounting / on /run/systemd/unit-root (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Applying namespace mount on /run/systemd/unit-root/run/credentials
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Bind-mounting /run/systemd/inaccessible/dir on /run/systemd/unit-root/run/credentials (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Successfully mounted /run/systemd/inaccessible/dir to /run/systemd/unit-root/run/credentials
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Applying namespace mount on /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Followed source symlinks /run/systemd/propagate/mariadb.service → /run/systemd/propagate/mariadb.service.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Bind-mounting /run/systemd/propagate/mariadb.service on /run/systemd/unit-root/run/systemd/incoming (MS_BIND "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Failed to mount /run/systemd/propagate/mariadb.service (type n/a) on /run/systemd/unit-root/run/systemd/incoming (MS_BIND ""): No such file or directory
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Bind-mounting /run/systemd/propagate/mariadb.service on /run/systemd/unit-root/run/systemd/incoming (MS_BIND "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Successfully mounted /run/systemd/propagate/mariadb.service to /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Applying namespace mount on /run/systemd/unit-root/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Bind-mounting /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp on /run/systemd/unit-root/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Successfully mounted /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp to /run/systemd/unit-root/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Applying namespace mount on /run/systemd/unit-root/var/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Bind-mounting /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp on /run/systemd/unit-root/var/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Successfully mounted /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp to /run/systemd/unit-root/var/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Remounted /run/systemd/unit-root/run/systemd/incoming.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[874]: mariadb.service: Executing: /usr/libexec/mariadb-check-socket
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 874 belongs to mariadb.service.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Control process exited, code=exited, status=0/SUCCESS (success)
+░░ Subject: Unit process exited
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ An ExecStartPre= process belonging to unit mariadb.service has exited.
+░░ 
+░░ The process' exit code is 'exited' and its exit status is 0.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Running next control command for state start-pre.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Will spawn child (service_run_next_control): /usr/libexec/mariadb-prepare-db-dir
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: About to execute /usr/libexec/mariadb-prepare-db-dir mariadb.service
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Forked /usr/libexec/mariadb-prepare-db-dir as 1081
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: PR_SET_MM_ARG_START failed: Operation not permitted
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: User lookup succeeded: uid=27 gid=27
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Bind-mounting / on /run/systemd/unit-root (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Applying namespace mount on /run/systemd/unit-root/run/credentials
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Bind-mounting /run/systemd/inaccessible/dir on /run/systemd/unit-root/run/credentials (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Successfully mounted /run/systemd/inaccessible/dir to /run/systemd/unit-root/run/credentials
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Applying namespace mount on /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Followed source symlinks /run/systemd/propagate/mariadb.service → /run/systemd/propagate/mariadb.service.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Bind-mounting /run/systemd/propagate/mariadb.service on /run/systemd/unit-root/run/systemd/incoming (MS_BIND "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Successfully mounted /run/systemd/propagate/mariadb.service to /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Applying namespace mount on /run/systemd/unit-root/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Bind-mounting /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp on /run/systemd/unit-root/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Successfully mounted /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp to /run/systemd/unit-root/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Applying namespace mount on /run/systemd/unit-root/var/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Bind-mounting /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp on /run/systemd/unit-root/var/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Successfully mounted /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp to /run/systemd/unit-root/var/tmp
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Remounted /run/systemd/unit-root/run/systemd/incoming.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:23:57 stdb01.stratos.xfusioncorp.com systemd[1081]: mariadb.service: Executing: /usr/libexec/mariadb-prepare-db-dir mariadb.service
+Oct 31 12:23:58 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1081]: Initializing MariaDB database
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: Two all-privilege accounts were created.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: One is root@localhost, it has no password, but you need to
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: be system 'root' user to connect. Use, for example, sudo mysql
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: The second is mysql@localhost, it has no password either, but
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: you need to be the system 'mysql' user to connect.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: After connecting you can set the password, if you would need to be
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: able to connect as any of these users with a password and without sudo
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: See the MariaDB Knowledgebase at https://mariadb.com/kb
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: Please report any problems at https://mariadb.org/jira
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: The latest information about MariaDB is available at https://mariadb.org/.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: Consider joining MariaDB's strong and vibrant community:
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[1383]: https://mariadb.org/get-involved/
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 1081 belongs to mariadb.service.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Control process exited, code=exited, status=0/SUCCESS (success)
+░░ Subject: Unit process exited
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ An ExecStartPre= process belonging to unit mariadb.service has exited.
+░░ 
+░░ The process' exit code is 'exited' and its exit status is 0.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got final SIGCHLD for state start-pre.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Will spawn child (service_enter_start): /usr/libexec/mariadbd
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Passing 0 fds to service
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: About to execute /usr/libexec/mariadbd --basedir=/usr "\$MYSQLD_OPTS" "\$_WSREP_NEW_CLUSTER"
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Forked /usr/libexec/mariadbd as 1442
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: PR_SET_MM_ARG_START failed: Operation not permitted
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed start-pre -> start
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: User lookup succeeded: uid=27 gid=27
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Bind-mounting / on /run/systemd/unit-root (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Applying namespace mount on /run/systemd/unit-root/run/credentials
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Bind-mounting /run/systemd/inaccessible/dir on /run/systemd/unit-root/run/credentials (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Successfully mounted /run/systemd/inaccessible/dir to /run/systemd/unit-root/run/credentials
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Applying namespace mount on /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Followed source symlinks /run/systemd/propagate/mariadb.service → /run/systemd/propagate/mariadb.service.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Bind-mounting /run/systemd/propagate/mariadb.service on /run/systemd/unit-root/run/systemd/incoming (MS_BIND "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Successfully mounted /run/systemd/propagate/mariadb.service to /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Applying namespace mount on /run/systemd/unit-root/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Bind-mounting /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp on /run/systemd/unit-root/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Successfully mounted /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp to /run/systemd/unit-root/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Applying namespace mount on /run/systemd/unit-root/var/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Bind-mounting /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp on /run/systemd/unit-root/var/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Successfully mounted /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp to /run/systemd/unit-root/var/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Remounted /run/systemd/unit-root/run/systemd/incoming.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1442]: mariadb.service: Executing: /usr/libexec/mariadbd --basedir=/usr
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (READY=1, STATUS=Taking your SQL requests now...)
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Will spawn child (service_enter_start_post): /usr/libexec/mariadb-check-upgrade
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: About to execute /usr/libexec/mariadb-check-upgrade
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Forked /usr/libexec/mariadb-check-upgrade as 1489
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed start -> start-post
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: PR_SET_MM_ARG_START failed: Operation not permitted
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: User lookup succeeded: uid=27 gid=27
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Bind-mounting / on /run/systemd/unit-root (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Applying namespace mount on /run/systemd/unit-root/run/credentials
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Bind-mounting /run/systemd/inaccessible/dir on /run/systemd/unit-root/run/credentials (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Successfully mounted /run/systemd/inaccessible/dir to /run/systemd/unit-root/run/credentials
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Applying namespace mount on /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Followed source symlinks /run/systemd/propagate/mariadb.service → /run/systemd/propagate/mariadb.service.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Bind-mounting /run/systemd/propagate/mariadb.service on /run/systemd/unit-root/run/systemd/incoming (MS_BIND "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Successfully mounted /run/systemd/propagate/mariadb.service to /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Applying namespace mount on /run/systemd/unit-root/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Bind-mounting /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp on /run/systemd/unit-root/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Successfully mounted /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-J9RCgP/tmp to /run/systemd/unit-root/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Applying namespace mount on /run/systemd/unit-root/var/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Bind-mounting /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp on /run/systemd/unit-root/var/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Successfully mounted /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-nL9ZDH/tmp to /run/systemd/unit-root/var/tmp
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Remounted /run/systemd/unit-root/run/systemd/incoming.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1489]: mariadb.service: Executing: /usr/libexec/mariadb-check-upgrade
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 1489 belongs to mariadb.service.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Control process exited, code=exited, status=0/SUCCESS (success)
+░░ Subject: Unit process exited
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ An ExecStartPost= process belonging to unit mariadb.service has exited.
+░░ 
+░░ The process' exit code is 'exited' and its exit status is 0.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got final SIGCHLD for state start-post.
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed start-post -> running
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Job 71 mariadb.service/start finished, result=done
+Oct 31 12:24:00 stdb01.stratos.xfusioncorp.com systemd[1]: Started MariaDB 10.5 database server.
+░░ Subject: A start job for unit mariadb.service has finished successfully
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ A start job for unit mariadb.service has finished successfully.
+░░ 
+░░ The job identifier is 71.
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Trying to enqueue job mariadb.service/stop/replace
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Installed new job mariadb.service/stop as 112
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Enqueued job mariadb.service/stop as 112
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed running -> stop-sigterm
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: Stopping MariaDB 10.5 database server...
+░░ Subject: A stop job for unit mariadb.service has begun execution
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ A stop job for unit mariadb.service has begun execution.
+░░ 
+░░ The job identifier is 112.
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STOPPING=1, STATUS=Shutdown in progress)
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STATUS=Dumping buffer pool page 1/176, EXTEND_TIMEOUT_USEC=30000000)
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STATUS=Waiting for page cleaner thread to exit, EXTEND_TIMEOUT_USEC=120000000)
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STATUS=Waiting to flush the buffer pool, EXTEND_TIMEOUT_USEC=30000000)
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STATUS=ensuring dirty buffer pool are written to log, EXTEND_TIMEOUT_USEC=30000000)
+Oct 31 12:24:05 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STATUS=Free innodb buffer pool, EXTEND_TIMEOUT_USEC=30000000)
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STATUS=MariaDB server is down)
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got notification message from PID 1442 (STATUS=MariaDB server is down)
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 1442 belongs to mariadb.service.
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Main process exited, code=exited, status=0/SUCCESS (success)
+░░ Subject: Unit process exited
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ An ExecStart= process belonging to unit mariadb.service has exited.
+░░ 
+░░ The process' exit code is 'exited' and its exit status is 0.
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Deactivated successfully.
+░░ Subject: Unit succeeded
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ The unit mariadb.service has successfully entered the 'dead' state.
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Service restart not allowed.
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed stop-sigterm -> dead
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Job 112 mariadb.service/stop finished, result=done
+Oct 31 12:24:06 stdb01.stratos.xfusioncorp.com systemd[1]: Stopped MariaDB 10.5 database server.
+░░ Subject: A stop job for unit mariadb.service has finished
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ A stop job for unit mariadb.service has finished.
+░░ 
+░░ The job identifier is 112 and the job result is done.
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Trying to enqueue job mariadb.service/start/replace
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Installed new job mariadb.service/start as 278
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Enqueued job mariadb.service/start as 278
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Will spawn child (service_enter_start_pre): /usr/libexec/mariadb-check-socket
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed to reset devices.allow/devices.deny: Operation not permitted
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed to set 'trusted.invocation_id' xattr on control group /docker/c35c05b8a472a9adf057998c9c1be359e22a5750b438aefed70bf3d822304cd6/system.slice/mariadb.service, ignoring: Operation not permitted
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed to remove 'trusted.delegate' xattr flag on control group /docker/c35c05b8a472a9adf057998c9c1be359e22a5750b438aefed70bf3d822304cd6/system.slice/mariadb.service, ignoring: Operation not permitted
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: About to execute /usr/libexec/mariadb-check-socket
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Forked /usr/libexec/mariadb-check-socket as 2448
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: PR_SET_MM_ARG_START failed: Operation not permitted
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed dead -> start-pre
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: Starting MariaDB 10.5 database server...
+░░ Subject: A start job for unit mariadb.service has begun execution
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ A start job for unit mariadb.service has begun execution.
+░░ 
+░░ The job identifier is 278.
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: User lookup succeeded: uid=27 gid=27
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Bind-mounting / on /run/systemd/unit-root (MS_BIND|MS_REC "")...
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Applying namespace mount on /run/systemd/unit-root/run/credentials
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Bind-mounting /run/systemd/inaccessible/dir on /run/systemd/unit-root/run/credentials (MS_BIND|MS_REC "")...
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Successfully mounted /run/systemd/inaccessible/dir to /run/systemd/unit-root/run/credentials
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Applying namespace mount on /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Followed source symlinks /run/systemd/propagate/mariadb.service → /run/systemd/propagate/mariadb.service.
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Bind-mounting /run/systemd/propagate/mariadb.service on /run/systemd/unit-root/run/systemd/incoming (MS_BIND "")...
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Successfully mounted /run/systemd/propagate/mariadb.service to /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Applying namespace mount on /run/systemd/unit-root/tmp
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Bind-mounting /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-7wpvwg/tmp on /run/systemd/unit-root/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Successfully mounted /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-7wpvwg/tmp to /run/systemd/unit-root/tmp
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Applying namespace mount on /run/systemd/unit-root/var/tmp
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Bind-mounting /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-kQBv2d/tmp on /run/systemd/unit-root/var/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Successfully mounted /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-kQBv2d/tmp to /run/systemd/unit-root/var/tmp
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Remounted /run/systemd/unit-root/run/systemd/incoming.
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:29:07 stdb01.stratos.xfusioncorp.com systemd[2448]: mariadb.service: Executing: /usr/libexec/mariadb-check-socket
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 2448 belongs to mariadb.service.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Control process exited, code=exited, status=0/SUCCESS (success)
+░░ Subject: Unit process exited
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ An ExecStartPre= process belonging to unit mariadb.service has exited.
+░░ 
+░░ The process' exit code is 'exited' and its exit status is 0.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Running next control command for state start-pre.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Will spawn child (service_run_next_control): /usr/libexec/mariadb-prepare-db-dir
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: About to execute /usr/libexec/mariadb-prepare-db-dir mariadb.service
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Forked /usr/libexec/mariadb-prepare-db-dir as 2482
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: PR_SET_MM_ARG_START failed: Operation not permitted
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: User lookup succeeded: uid=27 gid=27
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Bind-mounting / on /run/systemd/unit-root (MS_BIND|MS_REC "")...
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Applying namespace mount on /run/systemd/unit-root/run/credentials
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Bind-mounting /run/systemd/inaccessible/dir on /run/systemd/unit-root/run/credentials (MS_BIND|MS_REC "")...
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Successfully mounted /run/systemd/inaccessible/dir to /run/systemd/unit-root/run/credentials
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Applying namespace mount on /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Followed source symlinks /run/systemd/propagate/mariadb.service → /run/systemd/propagate/mariadb.service.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Bind-mounting /run/systemd/propagate/mariadb.service on /run/systemd/unit-root/run/systemd/incoming (MS_BIND "")...
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Successfully mounted /run/systemd/propagate/mariadb.service to /run/systemd/unit-root/run/systemd/incoming
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Applying namespace mount on /run/systemd/unit-root/tmp
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Bind-mounting /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-7wpvwg/tmp on /run/systemd/unit-root/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Successfully mounted /tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-7wpvwg/tmp to /run/systemd/unit-root/tmp
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Applying namespace mount on /run/systemd/unit-root/var/tmp
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Bind-mounting /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-kQBv2d/tmp on /run/systemd/unit-root/var/tmp (MS_BIND|MS_REC "")...
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Successfully mounted /var/tmp/systemd-private-46c2b649b6b54dd2bcc938323c1eafa0-mariadb.service-kQBv2d/tmp to /run/systemd/unit-root/var/tmp
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Remounted /run/systemd/unit-root/run/systemd/incoming.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[2482]: mariadb.service: Executing: /usr/libexec/mariadb-prepare-db-dir mariadb.service
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[2482]: Database MariaDB is not initialized, but the directory /var/lib/mysql is not empty, so initialization cannot be done.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com mariadb-prepare-db-dir[2482]: Make sure the /var/lib/mysql is empty before running mariadb-prepare-db-dir.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 2482 belongs to mariadb.service.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Control process exited, code=exited, status=1/FAILURE
+░░ Subject: Unit process exited
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ An ExecStartPre= process belonging to unit mariadb.service has exited.
+░░ 
+░░ The process' exit code is 'exited' and its exit status is 1.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got final SIGCHLD for state start-pre.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed with result 'exit-code'.
+░░ Subject: Unit failed
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ The unit mariadb.service has entered the 'failed' state with result 'exit-code'.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Service will not restart (restart setting)
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed start-pre -> failed
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Job 278 mariadb.service/start finished, result=failed
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: Failed to start MariaDB 10.5 database server.
+░░ Subject: A start job for unit mariadb.service has failed
+░░ Defined-By: systemd
+░░ Support: https://access.redhat.com/support
+░░ 
+░░ A start job for unit mariadb.service has finished with a failure.
+░░ 
+░░ The job identifier is 278 and the job result is failed.
+Oct 31 12:29:08 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Unit entered failed state.
+[root@stdb01 ~]# systemctl stop mariadb
+^C
+[root@stdb01 ~]# systemctl stop mariadb
+^C
+[root@stdb01 ~]# systemctl stop mariadb
+[root@stdb01 ~]# mkdir /var/lib/mysql
+[root@stdb01 ~]# chown mysql:mysql /var/lib/mysql
+[root@stdb01 ~]# chmod 750 /var/lib/mysql
+[root@stdb01 ~]# mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+Installing MariaDB/MySQL system tables in '/var/lib/mysql' ...
+OK
+
+To start mariadbd at boot time you have to copy
+support-files/mariadb.service to the right place for your system
+
+
+Two all-privilege accounts were created.
+One is root@localhost, it has no password, but you need to
+be system 'root' user to connect. Use, for example, sudo mysql
+The second is mysql@localhost, it has no password either, but
+you need to be the system 'mysql' user to connect.
+After connecting you can set the password, if you would need to be
+able to connect as any of these users with a password and without sudo
+
+See the MariaDB Knowledgebase at https://mariadb.com/kb
+
+You can start the MariaDB daemon with:
+cd '/usr' ; /usr/bin/mariadbd-safe --datadir='/var/lib/mysql'
+
+You can test the MariaDB daemon with mysql-test-run.pl
+cd '/usr/share/mysql-test' ; perl mariadb-test-run.pl
+
+Please report any problems at https://mariadb.org/jira
+
+The latest information about MariaDB is available at https://mariadb.org/.
+
+Consider joining MariaDB's strong and vibrant community:
+https://mariadb.org/get-involved/
+
+[root@stdb01 ~]# systemctl start mariadb
+[root@stdb01 ~]# systemctl status mariadb
+● mariadb.service - MariaDB 10.5 database server
+     Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; preset: disabled)
+     Active: active (running) since Fri 2025-10-31 12:31:47 UTC; 9s ago
+       Docs: man:mariadbd(8)
+             https://mariadb.com/kb/en/library/systemd/
+    Process: 2787 ExecStartPre=/usr/libexec/mariadb-check-socket (code=exited, status=0/SUCCESS)
+    Process: 2821 ExecStartPre=/usr/libexec/mariadb-prepare-db-dir mariadb.service (code=exited, status=0/SUCCESS)
+    Process: 2966 ExecStartPost=/usr/libexec/mariadb-check-upgrade (code=exited, status=0/SUCCESS)
+   Main PID: 2916 (mariadbd)
+     Status: "Taking your SQL requests now..."
+      Tasks: 31 (limit: 411434)
+     Memory: 70.7M
+     CGroup: /docker/c35c05b8a472a9adf057998c9c1be359e22a5750b438aefed70bf3d822304cd6/system.slice/mariadb.service
+             └─2916 /usr/libexec/mariadbd --basedir=/usr
+
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[2966]: Remounted /run/systemd/unit-root/run/systemd/incoming.
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[2966]: Remounted /run/systemd/unit-root/run/credentials.
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[2966]: mariadb.service: Executing: /usr/libexec/mariadb-check-upgrade
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Child 2966 belongs to mariadb.service.
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Control process exited, code=exited, status=0/SUCCESS (success)
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Got final SIGCHLD for state start-post.
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Changed start-post -> running
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Job 318 mariadb.service/start finished, result=done
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[1]: Started MariaDB 10.5 database server.
+Oct 31 12:31:47 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Failed to send unit change signal for mariadb.service: Connection reset by peer
+[root@stdb01 ~]# systemctl enable mariadb
+[root@stdb01 ~]# mysql -u root -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 3
+Server version: 10.5.27-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> amarvasu
