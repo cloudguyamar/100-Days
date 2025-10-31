@@ -1,7 +1,7 @@
 𝐃𝐚𝐲 𝟖 𝐨𝐟 𝟏𝟎𝟎 𝐃𝐚𝐲𝐬 – 𝐊𝐨𝐝𝐞𝐊𝐥𝐨𝐮𝐝 𝐂𝐡𝐚𝐥𝐥𝐞𝐧𝐠𝐞: Install Ansible
 Today, I set up Ansible v4.9.0 on the Jump Host to start exploring configuration management and automation tasks. Ansible was chosen for its agentless design and minimal setup, making it ideal for managing multiple servers efficiently.
 
-📖 What is Ansible?
+📖 What is Ansible? 
 Ansible is an open-source automation tool that helps teams automate:
 
 Configuration management – maintain consistent environments.
