@@ -1,7 +1,7 @@
 🚀 Day 7 of 100 Days: Linux SSH Authentication
 
 🖥️ Server Details
-Server Name	IP Address	Hostname	User	Purpose
+Server Name	IP Address	Hostname	User	Purpose 
 jumphost	-	-	thor	Jump Server
 stapp01	172.16.238.10	stapp01.stratos.xfusioncorp.com	tony	Nautilus App 1
 stapp02	172.16.238.11	stapp02.stratos.xfusioncorp.com	steve	Nautilus App 2
